@@ -1,7 +1,7 @@
 // Supabase project (Project Settings → API). The publishable key is meant to be public;
 // the database protects itself with row level security and role checks in every function.
-export const SUPABASE_URL = 'https://YOUR-PROJECT-REF.supabase.co';
-export const SUPABASE_KEY = 'sb_publishable_YOUR_KEY';
+export const SUPABASE_URL = 'https://zzykegbesieewnbzjygb.supabase.co';
+export const SUPABASE_KEY = 'sb_publishable_3OgpwhEaZgdKyEPIQPJu8g_gd36POWW';
 
 // Usernames sign in as <username>@sanisidro-fhc.local (must match supabase/schema.sql)
 export const EMAIL_DOMAIN = '@sanisidro-fhc.local';
