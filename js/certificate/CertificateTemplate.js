@@ -1,10 +1,12 @@
 import { PAGE_W } from '../config.js';
 import { clone, uid } from '../utils/helpers.js';
 
-export const CORE_IMAGES = { parishLogo: 'Parish logo', archLogo: 'Archdiocese logo', signature: "Parish Priest's signature" };
+export const CORE_IMAGES = { parishLogo: 'Parish logo', archLogo: 'Archdiocese logo', signature: "Parish Priest's signature",
+  emblem: 'Communion drawing (chalice)' };
 
-// Logos that ship with the app (taken from the parish's certificate design). An uploaded picture replaces them.
-export const DEFAULT_IMAGE_FILES = { archLogo: 'img/archdiocese-logo.png', parishLogo: 'img/parish-logo.png' };
+// Pictures that ship with the app (taken from the parish's certificate design). An uploaded picture replaces them.
+export const DEFAULT_IMAGE_FILES = { archLogo: 'img/archdiocese-logo.png', parishLogo: 'img/parish-logo.png',
+  emblem: 'img/communion-emblem.png' };
 
 export const PLACEHOLDERS = [
   ['{NAME}', 'Full name (First Middle Last Suffix)'], ['{PARENTS}', '"Father and Mother"'], ['{FATHER}', "Father's name"],
@@ -13,7 +15,7 @@ export const PLACEHOLDERS = [
   ['{MINISTER}', 'Communion minister'], ['{PRIEST}', 'Parish Priest name (Page tab)'], ['{CTRL}', 'Control No.'],
   ['{BAPTIZED}', 'Baptism date (long form)'], ['{CHURCH}', 'Church baptized'], ['{BAPTISM_MINISTER}', 'Baptism minister'],
   ['{AGE}', 'Age at First Communion'], ['{YEAR}', 'Year'], ['{ISSUED}', 'Date issued (the day it is printed)'],
-  ['{DOCNO}', 'Document No. of this printing'], ['{PREPARED_BY}', 'User who printed it'], ['{TODAY}', "Today's date"],
+  ['{DOCNO}', 'Document No. of this printing'], ['{PREPARED_BY}', 'Full name of who printed it'], ['{TODAY}', "Today's date"],
 ];
 
 export const FONT_LIST = ['Merriweather', 'Lora', 'EB Garamond', 'Cinzel', 'Great Vibes', 'Georgia', 'Times New Roman',
@@ -66,24 +68,24 @@ export class CertificateTemplate {
     return { id: uid(), type: 'image', img, x, y, w, h };
   }
 
-  // The parish's certificate design ("First Communion Certificate.pdf"); Reset to default returns here.
+  // The parish's certificate design ("First Communion Certificate (1).pdf"); Reset to default returns here.
   // Positions are in pixels on the 816 × 1056 page (8.5 × 11 in).
   static defaults() {
     const T = CertificateTemplate.text;
     const head = { font: 'Merriweather', bold: true, caps: true };
     const italic = { italic: true };
     return {
-      version: 2,
-      settings: { pageColor: '#ffffff', borderStyle: 'solid', borderWidth: 3, borderColor: '#000000', borderInset: 57,
+      version: 3,
+      settings: { pageColor: '#ffffff', borderStyle: 'solid', borderWidth: 3, borderColor: '#000000', borderInset: 46,
         priestName: 'Rev. Fr. (Name of the Parish Priest)', googleFonts: 'Merriweather, Lora' },
       items: [
-        CertificateTemplate.image('archLogo', 84, 90, 90, 90),
-        CertificateTemplate.image('parishLogo', 642, 88, 94, 94),
+        CertificateTemplate.image('archLogo', 72, 82, 102, 102),
+        CertificateTemplate.image('parishLogo', 636, 76, 108, 108),
         T('ARCHDIOCESE OF LIPA', 100, { x: 178, w: 460, size: 9.5, font: 'Merriweather' }),
         T('PARISH AND ARCHDIOCESAN SHRINE OF\nSAN ISIDRO LABRADOR', 114, { x: 178, w: 460, size: 13, lh: 1.15, ...head }),
         T('CUENCA, BATANGAS', 158, { x: 178, w: 460, size: 9.5, font: 'Merriweather' }),
         T('CERTIFICATE OF', 208, { size: 18, ...head }),
-        T('FIRST HOLY COMMUNION', 238, { size: 24, ...head }),
+        T('FIRST COMMUNION', 238, { size: 24, ...head }),
         T('This is to certify that', 302, { size: 14, ...italic }),
         T('{NAME}', 352, { size: 21, fit: true, ...head }),
         T('Child of {FATHER}', 424, { fit: true, ...italic }),
@@ -93,10 +95,13 @@ export class CertificateTemplate {
         T('First Holy Communion', 576, { size: 32, bold: true, ...italic }),
         T('on the {RECEIVED}', 645, italic),
         T('By the {MINISTER}', 681, { fit: true, ...italic }),
-        CertificateTemplate.image('signature', 308, 768, 200, 66),
-        T('{PRIEST}', 838, { size: 13, fit: true, x: 158, w: 500, ...head }),
-        T('PARISH PRIEST/RECTOR', 860, { size: 9, font: 'Merriweather', x: 158, w: 500 }),
-        T('Ctrl No: {CTRL}\nDate Issued: {ISSUED}', 918, { x: 80, w: 420, size: 9.5, bold: true, align: 'left', lh: 1.55 }),
+        CertificateTemplate.image('signature', 308, 742, 200, 66),
+        // Kept right of the chalice drawing; long names shrink to fit instead of running under it
+        T('{PRIEST}', 812, { size: 13, fit: true, x: 244, w: 340, ...head }),
+        T('PARISH PRIEST/RECTOR', 834, { size: 9, font: 'Merriweather', x: 244, w: 340 }),
+        T('Ctrl No: {CTRL}\nDate Issued: {ISSUED}', 932, { x: 502, w: 250, size: 9.5, bold: true, align: 'left', lh: 1.55 }),
+        // Drawn last so its white background covers the corner of the border, as in the parish's design
+        CertificateTemplate.image('emblem', 17, 690, 214, 325),
       ],
     };
   }

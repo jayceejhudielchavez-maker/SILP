@@ -59,24 +59,62 @@ export class AuthView {
       <label>Password</label><input id="lp" type="password" autocomplete="current-password">
       <div id="lerr"></div>
       <div class="actions"><button class="btn" id="lbtn" data-action="login">Sign in</button></div>
+      <div class="auth-alt">
+        <span class="mu">No account yet?</span>
+        <button class="btn o s" data-action="request">Request an account</button>
+      </div>
       <p class="mu" style="font-size:12px">Forgot your password? Ask the Admin to reset it.</p>`,
-    { login: submit, enter: submit });
+    { login: submit, enter: submit, request: () => this.showRequest() });
     setTimeout(() => $('lu') && $('lu').focus(), 50);
+  }
+
+  // Anyone can ask; the Admin approves (or rejects) it under Users
+  showRequest() {
+    const submit = () => {
+      if ($('rp1').value !== $('rp2').value) return this.#error('rerr', 'The two passwords do not match.');
+      this.#attempt($('rbtn'), 'rerr', () => this.app.requestAccount($('rn').value, $('ru').value, $('rp1').value));
+    };
+    this.#card(`<h2>Request an account</h2>
+      <p>Fill this in and the parish Admin will approve it. You can sign in once it is approved.</p>
+      <label>Full name (first and last name)</label><input id="rn" autocomplete="name" placeholder="e.g. Maria Santos">
+      <label>Username (3–30 letters or numbers, no spaces)</label><input id="ru" autocomplete="username" placeholder="e.g. maria.santos">
+      <label>Password (at least 8 characters, no spaces)</label><input id="rp1" type="password" autocomplete="new-password">
+      <label>Confirm password</label><input id="rp2" type="password" autocomplete="new-password">
+      <div id="rerr"></div>
+      <div class="actions"><button class="btn o" data-action="back">Back to sign in</button>
+        <button class="btn" id="rbtn" data-action="send">Send request</button></div>`,
+    { send: submit, enter: submit, back: () => this.showLogin() });
+    setTimeout(() => $('rn') && $('rn').focus(), 50);
   }
 
   showSetup() {
     const submit = () => {
       if ($('sp').value !== $('sp2').value) return this.#error('serr', 'The two passwords do not match.');
-      this.#attempt($('sbtn'), 'serr', () => this.app.createFirstAdmin($('su').value, $('sp').value));
+      this.#attempt($('sbtn'), 'serr', () => this.app.createFirstAdmin($('sn').value, $('su').value, $('sp').value));
     };
     this.#card(`<h2>First-time setup</h2>
       <p>Create the <b>Admin</b> account. The Admin can manage users, edit the certificate template, delete records and restore backups.</p>
+      <label>Full name (shown on waybills as "Released By")</label><input id="sn" autocomplete="name" placeholder="e.g. Juan Dela Cruz">
       <label>Admin username</label><input id="su" value="admin" autocomplete="username">
-      <label>Password (at least 8 characters)</label><input id="sp" type="password" autocomplete="new-password">
+      <label>Password (at least 8 characters, no spaces)</label><input id="sp" type="password" autocomplete="new-password">
       <label>Confirm password</label><input id="sp2" type="password" autocomplete="new-password">
       <div id="serr"></div>
       <div class="actions"><button class="btn" id="sbtn" data-action="create">Create Admin account</button></div>`,
     { create: submit, enter: submit });
+  }
+
+  // Accounts made before full names were required: type it once to get in
+  showFullName(username) {
+    const submit = () => this.#attempt($('nbtn'), 'nerr', () => this.app.setMyFullName($('nn').value));
+    this.#card(`<h2>Your full name</h2>
+      <p>Before continuing, type your full name for the account <b>${esc(username)}</b>.
+        It is printed on waybills and release slips as <b>"Released By"</b>, so use your real first and last name.</p>
+      <label>Full name</label><input id="nn" autocomplete="name" placeholder="e.g. Maria Santos">
+      <div id="nerr"></div>
+      <div class="actions"><button class="btn o" data-action="cancel">Sign out</button>
+        <button class="btn" id="nbtn" data-action="save">Continue</button></div>`,
+    { save: submit, enter: submit, cancel: () => this.app.logout() });
+    setTimeout(() => $('nn') && $('nn').focus(), 50);
   }
 
   showForcedPassword() {
@@ -86,7 +124,7 @@ export class AuthView {
     };
     this.#card(`<h2>Choose a new password</h2>
       <p>Your password was set by the Admin. Choose your own before continuing.</p>
-      <label>New password (at least 8 characters)</label><input id="fp" type="password" autocomplete="new-password">
+      <label>New password (at least 8 characters, no spaces)</label><input id="fp" type="password" autocomplete="new-password">
       <label>Confirm new password</label><input id="fp2" type="password" autocomplete="new-password">
       <div id="ferr"></div>
       <div class="actions"><button class="btn o" data-action="cancel">Cancel</button>

@@ -29,7 +29,7 @@ export class Exporter {
     XLSX.utils.book_append_sheet(book, XLSX.utils.json_to_sheet(list.map(r => r.exportRow()), { header: headers }), 'Communicants');
     XLSX.utils.book_append_sheet(book, XLSX.utils.aoa_to_sheet([
       [`${PARISH}, ${PARISH_PLACE}`], ['First Holy Communion records'],
-      ['Document No.', doc.docNo], ['Prepared by', doc.by], ['Date', Dates.stamp(doc.at)], ['Records', list.length],
+      ['Document No.', doc.docNo], ['Prepared by', doc.byName], ['Date', Dates.stamp(doc.at)], ['Records', list.length],
     ]), 'Info');
     XLSX.writeFile(book, this.#fileName('xlsx'));
     this.app.toast.show(`Excel downloaded · ${doc.docNo}`);
@@ -55,13 +55,13 @@ export class Exporter {
     pdf.setFontSize(13);
     pdf.text(`${PARISH} · ${PARISH_PLACE}`, 36, 34);
     pdf.setFontSize(9);
-    pdf.text(`First Holy Communion records · ${list.length} record(s) · ${doc.docNo} · prepared by ${doc.by} · ${Dates.stamp(doc.at)}`, 36, 50);
+    pdf.text(`First Holy Communion records · ${list.length} record(s) · ${doc.docNo} · prepared by ${doc.byName} · ${Dates.stamp(doc.at)}`, 36, 50);
     const cols = [['CtrlNo', 'Ctrl No.'], ['Name', 'Name'], ['Gender', 'Gender'], ['Birthdate', 'Birthdate'], ['Age', 'Age'],
       ['Birthplace', 'Birthplace'], ['FatherName', 'Father'], ['MotherName', 'Mother'], ['DateBaptized', 'Baptized'],
       ['ChurchBaptized', 'Church'], ['BaptismMinister', 'Bapt. Minister'], ['DateCommunion', 'Communion'],
       ['CommunionMinister', 'Comm. Minister'], ['UpdatedBy', 'Updated by']];
     pdf.autoTable({
-      startY: 62, head: [cols.map(c => c[1])], styles: { fontSize: 7, cellPadding: 3 }, headStyles: { fillColor: [122, 31, 43] },
+      startY: 62, head: [cols.map(c => c[1])], styles: { fontSize: 7, cellPadding: 3 }, headStyles: { fillColor: [30, 91, 64] },   // the app's dark green
       body: list.map(r => cols.map(([k]) => k === 'Name' ? r.sortName : k === 'Age' ? String(r.age) : (r[k] || ''))),
     });
     pdf.save(this.#fileName('pdf'));
@@ -72,7 +72,7 @@ export class Exporter {
   async backup() {
     const records = this.app.records;
     const doc = await this.#log('JSON backup', records.length);
-    const data = { app: 'FirstCommunionRecords', version: 1, exportedAt: doc.at, exportedBy: doc.by, docNo: doc.docNo,
+    const data = { app: 'FirstCommunionRecords', version: 1, exportedAt: doc.at, exportedBy: doc.byName, docNo: doc.docNo,
       records, template: this.app.template.toJSON(), images: this.app.images };
     Files.download(new Blob([JSON.stringify(data)], { type: 'application/json' }), `First Communion backup ${Dates.today()}.json`);
     this.app.toast.show(`Backup downloaded · ${doc.docNo}`);

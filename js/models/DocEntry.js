@@ -11,12 +11,13 @@ export class DocEntry {
     this.ctrl = row.ctrl_no || '';
     this.name = row.name || '';
     this.detail = row.detail || '';
-    this.by = row.by_user;
+    this.by = row.by_user;                    // username
+    this.byName = row.by_name || row.by_user; // full name of the encoder (older entries may only have the username)
     this.at = row.at;
   }
 
   matches(query) {
     const q = (query || '').trim().toLowerCase();
-    return !q || `${this.docNo} ${this.type} ${this.ctrl} ${this.name} ${this.by} ${this.detail}`.toLowerCase().includes(q);
+    return !q || `${this.docNo} ${this.type} ${this.ctrl} ${this.name} ${this.by} ${this.byName} ${this.detail}`.toLowerCase().includes(q);
   }
 }

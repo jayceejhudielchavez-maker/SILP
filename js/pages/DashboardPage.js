@@ -55,7 +55,7 @@ export class DashboardPage extends Page {
           <p>First Holy Communion Records · ${PARISH_PLACE}</p>
         </div>
         <div class="hero-side">
-          <div class="greet">${greeting}, <b>${esc(this.app.me.username)}</b></div>
+          <div class="greet">${greeting}, <b>${esc((this.app.me.fullName || this.app.me.username).split(' ')[0])}</b></div>
           <div class="date">${new Date().toLocaleDateString([], { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
           <div class="row">
             <button class="btn hero-btn" data-action="newEntry">+ New Entry</button>

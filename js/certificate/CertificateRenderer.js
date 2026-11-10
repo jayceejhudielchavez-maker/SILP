@@ -27,7 +27,7 @@ export class CertificateRenderer {
       BAPTIZED: Dates.long(r.DateBaptized), CHURCH: r.ChurchBaptized, BAPTISM_MINISTER: r.BaptismMinister,
       PRIEST: this.template.settings.priestName, CTRL: r.CtrlNo, YEAR: r.Year,
       ISSUED: Dates.short(doc && doc.at ? Dates.normalize(new Date(doc.at)) : Dates.today()),   // local date, not UTC
-      DOCNO: doc ? doc.docNo : 'DOC-00000', PREPARED_BY: doc ? doc.by : this.preparedBy, TODAY: Dates.short(Dates.today()),
+      DOCNO: doc ? doc.docNo : 'DOC-00000', PREPARED_BY: doc ? (doc.byName || doc.by) : this.preparedBy, TODAY: Dates.short(Dates.today()),
     };
   }
 

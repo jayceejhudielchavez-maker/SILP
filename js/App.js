@@ -7,6 +7,7 @@ import { RecordFilter } from './models/RecordFilter.js';
 import { CertificateTemplate, DefaultImages } from './certificate/CertificateTemplate.js';
 import { CertificateRenderer } from './certificate/CertificateRenderer.js';
 import { FontLoader } from './certificate/FontLoader.js';
+import { Slips } from './certificate/Slips.js';
 import { Toast } from './ui/Toast.js';
 import { Modal } from './ui/Modal.js';
 import { ErrorBar } from './ui/ErrorBar.js';
@@ -82,8 +83,23 @@ export class App {
   // After signing in: choose a new password first if the Admin set a temporary one
   async enter() {
     const me = await this.auth.profile();
+    if (me.pending) {
+      await this.auth.signOut();
+      return this.authView.showLogin(`Your account "${me.username}" is waiting for the Admin's approval. Try again once they approve it.`);
+    }
     if (me.mustChange) return this.authView.showForcedPassword();
+    if (!me.fullName) return this.authView.showFullName(me.username);   // required: it goes on waybills
     await this.boot(me);
+  }
+
+  async setMyFullName(fullName) {
+    await this.auth.setMyFullName(fullName);
+    await this.enter();
+  }
+
+  async requestAccount(fullName, username, password) {
+    const u = await this.auth.requestAccount(fullName, username, password);
+    this.authView.showLogin(`Request sent for "${u}". Ask the Admin to approve it under Users, then sign in with that username and password.`);
   }
 
   async signIn(username, password) {
@@ -96,8 +112,8 @@ export class App {
     }
   }
 
-  async createFirstAdmin(username, password) {
-    await this.boot(await this.auth.createFirstAdmin(username, password));
+  async createFirstAdmin(fullName, username, password) {
+    await this.boot(await this.auth.createFirstAdmin(fullName, username, password));
   }
 
   async setNewPassword(password) {
@@ -134,7 +150,7 @@ export class App {
   changePasswordDialog() {
     this.modal.open(`<h3>Change my password</h3>
       <label>Current password</label><input id="cp0" type="password" autocomplete="current-password">
-      <label>New password (at least 8 characters)</label><input id="cp1" type="password" autocomplete="new-password">
+      <label>New password (at least 8 characters, no spaces)</label><input id="cp1" type="password" autocomplete="new-password">
       <label>Confirm new password</label><input id="cp2" type="password" autocomplete="new-password">
       <div class="actions"><button class="btn o" data-action="close">Cancel</button><button class="btn" data-action="save">Save</button></div>`, {
       save: btn => {
@@ -157,7 +173,8 @@ export class App {
         <div class="brand"><img src="img/parish-logo.png" alt="">
           <div><b>First Holy Communion</b><span>San Isidro Labrador · Cuenca</span></div></div>
         <nav id="nav"></nav>
-        <div class="me">Signed in as <b>${esc(this.me.username)}</b> <span class="tag">${esc(this.me.role)}</span>
+        <div class="me">Signed in as <b>${esc(this.me.fullName)}</b><br><small style="color:var(--sb-mu)">${esc(this.me.username)}</small>
+          <span class="tag">${esc(this.me.role)}</span>
           ${Theme.button()}
           <button class="btn s" data-shell="password">Change password</button>
           <button class="btn s" data-shell="logout">Sign out</button></div>
@@ -244,10 +261,11 @@ export class App {
     this.template = template;
     this.images = images || {};
     this.fonts.ensure(template);
+    Slips.logo = this.images.parishLogo || '';   // waybills and slips show the parish logo
   }
 
   renderer() {
-    return new CertificateRenderer(this.template, this.images, this.me ? this.me.username : '');
+    return new CertificateRenderer(this.template, this.images, this.me ? this.me.fullName : '');
   }
 
   // ----- live updates

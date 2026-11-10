@@ -54,7 +54,7 @@ export class DocumentsPage extends Page {
     table.innerHTML = `<table><tr><th>Document No.</th><th>Type</th><th>Record</th><th>Details</th><th>Prepared by</th><th>Date and time</th><th></th></tr>
       ${list.map(d => `<tr><td class="mono">${esc(d.docNo)}</td><td>${esc(d.type)}</td>
         <td>${d.ctrl ? `<span class="mono">${esc(d.ctrl)}</span><br>` : ''}${esc(d.name)}</td><td><small>${esc(d.detail)}</small></td>
-        <td>${esc(d.by)}</td><td>${esc(Dates.stamp(d.at))}</td>
+        <td>${esc(d.byName)}${d.byName !== d.by ? `<br><small class="mono">${esc(d.by)}</small>` : ''}</td><td>${esc(Dates.stamp(d.at))}</td>
         <td><button class="btn s o" data-action="slip" data-doc="${esc(d.docNo)}">${DocumentsPage.#isBatch(d) ? 'Print waybill' : 'Print slip'}</button></td></tr>`).join('')
         || '<tr><td colspan="7" class="mu">Nothing logged yet.</td></tr>'}</table>`;
   }

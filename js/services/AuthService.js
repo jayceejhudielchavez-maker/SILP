@@ -20,9 +20,20 @@ export class AuthService {
     return u;
   }
 
-  static checkPassword(password) {
-    if (String(password || '').length < 8) throw new AppError('Password must be at least 8 characters.');
-    return password;
+  // First and last name, e.g. "Maria Santos". Shown on waybills under "Released By".
+  static checkFullName(fullName) {
+    const n = String(fullName || '').trim().replace(/\s+/g, ' ');
+    if (!/^\S+( \S+)+$/.test(n) || n.length < 5) throw new AppError('Please type the full name (first name and last name).');
+    if (n.length > 100) throw new AppError('The full name is too long.');
+    return n;
+  }
+
+  // At least 8 characters and no spaces anywhere ("        " or "jas pass" are refused)
+  static checkPassword(password, what = 'Password') {
+    const p = String(password || '');
+    if (/\s/.test(p)) throw new AppError(`${what} cannot contain spaces.`);
+    if (p.length < 8) throw new AppError(`${what} must be at least 8 characters.`);
+    return p;
   }
 
   async hasSession() {
@@ -47,16 +58,42 @@ export class AuthService {
   async profile() {
     const { data } = await this.#auth.getUser();
     if (!data || !data.user) throw new AppError('Your session ended. Please sign in again.');
-    const p = await this.db.run(this.db.client.from('profiles').select('username,role,must_change').eq('id', data.user.id).maybeSingle());
-    if (!p) throw new AppError('This account was not created by the Admin, so it has no access. Ask the Admin to add you under Users.');
-    return { username: p.username, role: p.role, mustChange: p.must_change };
+    const p = await this.db.run(this.db.client.from('profiles')
+      .select('username,role,must_change,status,full_name').eq('id', data.user.id).maybeSingle());
+    if (!p) throw new AppError('This account has no access. Use "Request an account" on the sign-in page, or ask the Admin to add you under Users.');
+    return { username: p.username, role: p.role, mustChange: p.must_change, pending: p.status === 'Pending',
+      fullName: (p.full_name || '').trim() };
+  }
+
+  // Accounts without a full name are asked for one right after signing in
+  async setMyFullName(fullName) {
+    await this.db.rpc('set_my_full_name', { p_name: AuthService.checkFullName(fullName) });
+  }
+
+  // "Request an account" on the sign-in page. The account waits as Pending until an Admin approves it.
+  async requestAccount(fullName, username, password) {
+    const u = AuthService.checkUsername(username);
+    AuthService.checkPassword(password);
+    const name = AuthService.checkFullName(fullName);
+    const { data, error } = await this.#auth.signUp({
+      email: this.email(u), password, options: { data: { username: u, full_name: name, request: true } },
+    });
+    if (error) {
+      throw new AppError(/registered|exists/i.test(error.message) ? `The username "${u}" is already taken. Choose another.` : 'Could not send the request: ' + error.message);
+    }
+    if (!data.session) {
+      throw new AppError('Supabase wants email confirmation. The Admin must turn OFF "Confirm email" in Supabase (see README).');
+    }
+    await this.signOut();   // nothing to do until it is approved
+    return u;
   }
 
   // First-time setup: the first account ever made becomes the Admin (decided in the database)
-  async createFirstAdmin(username, password) {
+  async createFirstAdmin(fullName, username, password) {
+    const name = AuthService.checkFullName(fullName);
     const u = AuthService.checkUsername(username);
     AuthService.checkPassword(password);
-    const { data, error } = await this.#auth.signUp({ email: this.email(u), password, options: { data: { username: u } } });
+    const { data, error } = await this.#auth.signUp({ email: this.email(u), password, options: { data: { username: u, full_name: name } } });
     if (error) throw new AppError('Could not create the account: ' + error.message);
     if (!data.session) {
       throw new AppError('Supabase wants email confirmation. Turn OFF "Confirm email" (see README), delete this user under Authentication → Users, then try again.');
@@ -71,13 +108,14 @@ export class AuthService {
 
   // Admin adds a user: the database records the invite, then a throw-away client signs the
   // new account up so the Admin stays signed in
-  async createUser(username, password, role) {
+  async createUser(fullName, username, password, role) {
+    const name = AuthService.checkFullName(fullName);
     const u = AuthService.checkUsername(username);
-    if (String(password || '').length < 8) throw new AppError('The temporary password needs at least 8 characters.');
-    await this.db.inviteUser(u, role);
+    AuthService.checkPassword(password, 'The temporary password');
+    await this.db.inviteUser(u, role, name);
     const temp = window.supabase.createClient(this.db.url, this.db.key,
       { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: 'fhc-new-user' } });
-    const { data, error } = await temp.auth.signUp({ email: this.email(u), password, options: { data: { username: u } } });
+    const { data, error } = await temp.auth.signUp({ email: this.email(u), password, options: { data: { username: u, full_name: name } } });
     if (error) {
       await this.db.cancelInvite(u).catch(() => {});
       throw new AppError(/registered|exists/i.test(error.message) ? `The username "${u}" is already used.` : 'Could not create the account: ' + error.message);

@@ -114,11 +114,24 @@ export class Database {
   // ----- users (Admin)
 
   async listUsers() {
-    const rows = await this.run(this.client.from('profiles').select('username,role,must_change,created_by,created_at').order('username'));
-    return rows.map(u => ({ username: u.username, role: u.role, mustChange: u.must_change, createdBy: u.created_by || '', createdAt: u.created_at }));
+    const rows = await this.run(this.client.from('profiles')
+      .select('username,role,must_change,status,full_name,created_by,created_at').order('username'));
+    return rows.map(u => ({ username: u.username, role: u.role, mustChange: u.must_change, pending: u.status === 'Pending',
+      fullName: u.full_name || '', createdBy: u.created_by || '', createdAt: u.created_at }));
   }
 
-  inviteUser(username, role) { return this.rpc('admin_invite', { p_username: username, p_role: role }); }
+  // Sign-in accounts with no profile (unfinished setup/request); usernames come from the made-up emails
+  async listOrphans() {
+    const rows = await this.rpc('admin_list_orphans');
+    return (rows || []).map(o => ({ id: o.user_id, username: String(o.email || '').split('@')[0], createdAt: o.created_at }));
+  }
+
+  deleteOrphan(id) { return this.rpc('admin_delete_orphan', { p_id: id }); }
+
+  approveUser(username, role) { return this.rpc('admin_approve', { p_username: username, p_role: role }); }
+
+  inviteUser(username, role, fullName) { return this.rpc('admin_invite', { p_username: username, p_role: role, p_full_name: fullName }); }
+  setFullName(username, fullName) { return this.rpc('admin_set_full_name', { p_username: username, p_name: fullName }); }
   cancelInvite(username) { return this.rpc('admin_cancel_invite', { p_username: username }); }
   resetPassword(username, temp) { return this.rpc('admin_reset_password', { p_username: username, p_temp: temp }); }
   setRole(username, role) { return this.rpc('admin_set_role', { p_username: username, p_role: role }); }
