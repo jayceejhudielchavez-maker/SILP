@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>First Communion Records · San Isidro Labrador</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style id="pageStyle"></style>   <!-- @page rules are swapped in here before printing -->
+</head>
+<body>
+  <div id="errbar"><span id="errtext" class="sp"></span><button class="btn s o" id="errclose">Dismiss</button></div>
+  <div id="app"><div class="auth"><div class="card">Loading…</div></div></div>
+  <div id="modal"></div>
+  <div id="toast"></div>
+  <div id="printArea"></div>
+  <div id="offscreen"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js"></script>
+  <script type="module" src="js/main.js"></script>
+  <script>
+    // If the app's JavaScript could not load (no internet, opened as a plain file, a code error),
+    // say so instead of leaving "Loading…" on screen forever.
+    setTimeout(function () {
+      if (window.__appStarted) return;
+      document.getElementById('app').innerHTML =
+        '<div class="auth"><div class="card"><h2>Cannot open the app</h2>' +
+        '<div class="note bad">The app\'s code did not load. Check the internet connection and reload. ' +
+        'Open it from the web address (https://…), not by double-clicking the file.</div></div></div>';
+    }, 8000);
+  </script>
+  <noscript>This app needs JavaScript turned on.</noscript>
+</body>
+</html>
