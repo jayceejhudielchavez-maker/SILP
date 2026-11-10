@@ -36,6 +36,20 @@ export class Dates {
     return isNaN(d) ? iso : d.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
   }
 
+  // "just now", "5 min ago", "3 hours ago", "2 days ago", then the date
+  static relative(iso) {
+    const d = new Date(iso);
+    if (!iso || isNaN(d)) return '';
+    const min = Math.round((Date.now() - d) / 60000);
+    if (min < 1) return 'just now';
+    if (min < 60) return `${min} min ago`;
+    const h = Math.round(min / 60);
+    if (h < 24) return `${h} hour${h === 1 ? '' : 's'} ago`;
+    const days = Math.round(h / 24);
+    if (days < 7) return `${days} day${days === 1 ? '' : 's'} ago`;
+    return d.toLocaleDateString([], { dateStyle: 'medium' });
+  }
+
   static age(birth, ref) {
     const b = Dates.parse(birth), r = Dates.parse(ref);
     if (!b || !r) return '';

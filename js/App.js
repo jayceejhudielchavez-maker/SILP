@@ -12,6 +12,7 @@ import { Modal } from './ui/Modal.js';
 import { ErrorBar } from './ui/ErrorBar.js';
 import { AuthView } from './ui/AuthView.js';
 import { Theme } from './ui/Theme.js';
+import { PasswordReveal } from './ui/PasswordReveal.js';
 import { DashboardPage } from './pages/DashboardPage.js';
 import { EntryPage } from './pages/EntryPage.js';
 import { RecordsPage } from './pages/RecordsPage.js';
@@ -48,6 +49,7 @@ export class App {
 
     this.errors.watchWindow();
     Theme.install();
+    PasswordReveal.install(document.body);
   }
 
   get isAdmin() { return !!this.me && this.me.role === 'Admin'; }
@@ -152,7 +154,8 @@ export class App {
     const root = $('app');
     root.innerHTML = `<div class="shell">
       <aside>
-        <div class="brand"><b>First Holy Communion</b><span>San Isidro Labrador · Cuenca</span></div>
+        <div class="brand"><img src="img/parish-logo.png" alt="">
+          <div><b>First Holy Communion</b><span>San Isidro Labrador · Cuenca</span></div></div>
         <nav id="nav"></nav>
         <div class="me">Signed in as <b>${esc(this.me.username)}</b> <span class="tag">${esc(this.me.role)}</span>
           ${Theme.button()}
