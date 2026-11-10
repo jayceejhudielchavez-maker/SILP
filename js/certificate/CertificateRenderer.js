@@ -26,6 +26,7 @@ export class CertificateRenderer {
       RECEIVED: Dates.long(r.DateCommunion), MINISTER: r.CommunionMinister,
       BAPTIZED: Dates.long(r.DateBaptized), CHURCH: r.ChurchBaptized, BAPTISM_MINISTER: r.BaptismMinister,
       PRIEST: this.template.settings.priestName, CTRL: r.CtrlNo, YEAR: r.Year,
+      ISSUED: Dates.short(doc && doc.at ? Dates.normalize(new Date(doc.at)) : Dates.today()),   // local date, not UTC
       DOCNO: doc ? doc.docNo : 'DOC-00000', PREPARED_BY: doc ? doc.by : this.preparedBy, TODAY: Dates.short(Dates.today()),
     };
   }
@@ -64,10 +65,26 @@ export class CertificateRenderer {
 
     const text = vals ? CertificateRenderer.fill(it.text, vals) : it.text;
     const align = ALIGNS.includes(it.align) ? it.align : 'center';
-    return `<div${attrs} style="${pos}font-family:${esc(cssFont(it.font))};font-size:${num(it.size, 14)}pt;color:${cssColor(it.color, '#000')};` +
+    const size = num(it.size, 14);
+    // "Shrink to fit" items stay on one line; shrinkToFit() makes long names smaller instead of wrapping
+    const fit = it.fit ? ` data-fit="${size}"` : '';
+    const wrap = it.fit ? 'white-space:nowrap' : 'white-space:pre-wrap;overflow-wrap:break-word';
+    return `<div${attrs}${fit} style="${pos}font-family:${esc(cssFont(it.font))};font-size:${size}pt;color:${cssColor(it.color, '#000')};` +
       `font-weight:${it.bold ? 700 : 400};font-style:${it.italic ? 'italic' : 'normal'};text-decoration:${it.underline ? 'underline' : 'none'};` +
-      `text-transform:${it.caps ? 'uppercase' : 'none'};text-align:${align};line-height:${num(it.lh, 1.25)};white-space:pre-wrap;overflow-wrap:break-word">` +
+      `text-transform:${it.caps ? 'uppercase' : 'none'};text-align:${align};line-height:${num(it.lh, 1.25)};${wrap}">` +
       `${esc(text)}${handle}</div>`;
+  }
+
+  // Makes every "shrink to fit" text small enough to fit its width. Needs the page on screen (laid out).
+  static shrinkToFit(root) {
+    root.querySelectorAll('[data-fit]').forEach(el => {
+      let size = Number(el.dataset.fit);
+      el.style.fontSize = size + 'pt';
+      while (el.scrollWidth > el.clientWidth + 1 && size > 7) {
+        size -= 0.5;
+        el.style.fontSize = size + 'pt';
+      }
+    });
   }
 
   // A complete .html file that opens and prints on its own
@@ -85,6 +102,8 @@ export class CertificateRenderer {
     const k = Math.min(1, w / PAGE_W);
     container.innerHTML = `<div style="width:${PAGE_W * k}px;height:${PAGE_H * k}px;margin:0 auto">
       <div class="scaler" style="width:${PAGE_W}px;height:${PAGE_H}px;transform:scale(${k})">${pageHtml}</div></div>`;
+    CertificateRenderer.shrinkToFit(container);
+    document.fonts.ready.then(() => CertificateRenderer.shrinkToFit(container));   // again once web fonts arrive
     return k;
   }
 }

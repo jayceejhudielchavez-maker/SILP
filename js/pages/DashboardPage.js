@@ -51,11 +51,12 @@ export class DashboardPage extends Page {
     const W = Math.max(years.length * (bw + 12) + 20, 200);
     const bars = years.map((y, i) => {
       const h = Math.max(2, Math.round(byYear[y] / max * (H - 30))), x = 10 + i * (bw + 12);
-      return `<rect x="${x}" y="${H - h}" width="${bw}" height="${h}" rx="4" fill="#7a1f2b"/>
-        <text x="${x + bw / 2}" y="${H - h - 6}" text-anchor="middle" font-size="12" fill="#221c18">${byYear[y]}</text>
-        <text x="${x + bw / 2}" y="${H + 16}" text-anchor="middle" font-size="12" fill="#6f655c">${esc(y)}</text>`;
+      // Colours come from the theme (style="fill:var(...)" so they change in dark mode)
+      return `<rect x="${x}" y="${H - h}" width="${bw}" height="${h}" rx="4" style="fill:var(--chart)"/>
+        <text x="${x + bw / 2}" y="${H - h - 6}" text-anchor="middle" font-size="12" style="fill:var(--chart-ink)">${byYear[y]}</text>
+        <text x="${x + bw / 2}" y="${H + 16}" text-anchor="middle" font-size="12" style="fill:var(--mu)">${esc(y)}</text>`;
     }).join('');
     return `<div style="overflow-x:auto"><svg width="${W}" height="${H + 24}" style="margin-top:10px">
-      <line x1="0" y1="${H}" x2="${W}" y2="${H}" stroke="#e4ddd1"/>${bars}</svg></div>`;
+      <line x1="0" y1="${H}" x2="${W}" y2="${H}" style="stroke:var(--line)"/>${bars}</svg></div>`;
   }
 }

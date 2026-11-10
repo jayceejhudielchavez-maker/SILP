@@ -97,6 +97,15 @@ export class Database {
     return new DocEntry(await this.rpc('log_doc', { p_type: type, p_ctrl: ctrl, p_name: name, p_detail: detail }));
   }
 
+  // Many certificates at once: one Document No. per certificate, plus one for the batch (its waybill)
+  async logCertificateBatch(format, records) {
+    const res = await this.rpc('log_certificate_batch', {
+      p_format: format,
+      p_items: records.map(r => ({ ctrl: r.CtrlNo, name: r.fullName })),
+    });
+    return { batch: new DocEntry(res.batch), items: res.items.map(row => new DocEntry(row)) };
+  }
+
   async loadDocuments() {
     const rows = await this.run(this.client.from('documents').select('*').order('id', { ascending: false }).limit(1000));
     return rows.map(r => new DocEntry(r));

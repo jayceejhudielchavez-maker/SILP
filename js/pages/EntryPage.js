@@ -23,6 +23,7 @@ export class EntryPage extends Page {
     const editing = !!this.editing;
     const input = (k, label, type = 'text', extra = '') =>
       `<div><label for="f_${k}">${label}</label><input id="f_${k}" data-field="${k}" type="${type}" value="${esc(r[k])}" ${extra}></div>`;
+    const minister = 'placeholder="e.g. Rev. Fr. Juan Dela Cruz"';   // printed as "By the Rev. Fr. Juan Dela Cruz"
 
     this.view.innerHTML = `
       <div id="formNote"></div>
@@ -45,9 +46,9 @@ export class EntryPage extends Page {
         </div>
         <div class="grid g2">${input('FatherName', "Father's Name")}${input('MotherName', "Mother's Name")}</div>
         <h3 style="margin-top:18px">Baptism</h3>
-        <div class="grid g3">${input('DateBaptized', 'Date Baptized', 'date')}${input('ChurchBaptized', 'Church Baptized')}${input('BaptismMinister', 'Minister')}</div>
+        <div class="grid g3">${input('DateBaptized', 'Date Baptized', 'date')}${input('ChurchBaptized', 'Church Baptized')}${input('BaptismMinister', 'Minister', 'text', minister)}</div>
         <h3 style="margin-top:18px">First Holy Communion</h3>
-        <div class="grid g3">${input('DateCommunion', 'Date Received Communion', 'date')}${input('CommunionMinister', 'Minister')}</div>
+        <div class="grid g3">${input('DateCommunion', 'Date Received Communion', 'date')}${input('CommunionMinister', 'Minister', 'text', minister)}</div>
         <div class="actions">
           <button class="btn o" data-action="clear">Clear</button>
           <button class="btn o" data-action="saveAndCertificate">Save and Certificate</button>

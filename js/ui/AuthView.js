@@ -1,5 +1,6 @@
 import { $, esc } from '../utils/helpers.js';
 import { PARISH, PARISH_PLACE } from '../config.js';
+import { Theme } from './Theme.js';
 
 // The screens before the app opens: sign in, first-time setup, choose a new password
 export class AuthView {
@@ -10,7 +11,7 @@ export class AuthView {
   get #root() { return $('app'); }
 
   #card(inner, actions) {
-    this.#root.innerHTML = `<div class="auth"><div class="card">
+    this.#root.innerHTML = `<div class="auth">${Theme.button()}<div class="card">
       <div class="mu" style="font-size:12px">Archdiocese of Lipa</div>
       <b style="display:block;margin-bottom:12px">${PARISH} · ${PARISH_PLACE}</b>
       ${inner}</div></div>`;

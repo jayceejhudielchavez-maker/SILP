@@ -165,7 +165,9 @@ export class TemplatePage extends Page {
           <button class="btn s o" data-action="upload" data-key="${key}">Upload</button>
           ${this.images[key] ? `<button class="btn s g" data-action="removeImage" data-key="${key}">Remove</button>` : ''}</div>
       </div>`).join('') +
-      '<small>Use a PNG with a transparent background for the signature. Pictures are resized to at most 1000 px and stored in the database.</small>';
+      '<small>The Archdiocese and parish logos from the parish\'s certificate design are built in; uploading a picture replaces them, ' +
+      'and Remove goes back to the built-in one. Use a PNG with a transparent background for the signature. ' +
+      'Pictures are resized to at most 1000 px and stored in the database.</small>';
   }
 
   #helpPanel() {
@@ -208,7 +210,7 @@ export class TemplatePage extends Page {
         <div><label>Colour</label><input type="color" data-k="color" value="${esc(cssColor(it.color, '#000000'))}"></div>
       </div>
       <label>Alignment</label><select data-k="align">${['left', 'center', 'right', 'justify'].map(a => `<option ${it.align === a ? 'selected' : ''}>${a}</option>`).join('')}</select>
-      <div style="margin-top:10px">${[['bold', 'Bold'], ['italic', 'Italic'], ['underline', 'Underline'], ['caps', 'ALL CAPS']]
+      <div style="margin-top:10px">${[['bold', 'Bold'], ['italic', 'Italic'], ['underline', 'Underline'], ['caps', 'ALL CAPS'], ['fit', 'Shrink long text to one line']]
         .map(([k, l]) => `<label class="chk"><input type="checkbox" data-k="${k}" ${it[k] ? 'checked' : ''}> ${l}</label>`).join('')}</div>
       ${position}`;
   }

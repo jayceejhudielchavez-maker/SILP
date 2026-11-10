@@ -4,13 +4,14 @@ import { Database } from './services/Database.js';
 import { AuthService } from './services/AuthService.js';
 import { LiveSync } from './services/LiveSync.js';
 import { RecordFilter } from './models/RecordFilter.js';
-import { CertificateTemplate } from './certificate/CertificateTemplate.js';
+import { CertificateTemplate, DefaultImages } from './certificate/CertificateTemplate.js';
 import { CertificateRenderer } from './certificate/CertificateRenderer.js';
 import { FontLoader } from './certificate/FontLoader.js';
 import { Toast } from './ui/Toast.js';
 import { Modal } from './ui/Modal.js';
 import { ErrorBar } from './ui/ErrorBar.js';
 import { AuthView } from './ui/AuthView.js';
+import { Theme } from './ui/Theme.js';
 import { DashboardPage } from './pages/DashboardPage.js';
 import { EntryPage } from './pages/EntryPage.js';
 import { RecordsPage } from './pages/RecordsPage.js';
@@ -46,6 +47,7 @@ export class App {
       .map(PageClass => { const page = new PageClass(this); return [page.name, page]; }));
 
     this.errors.watchWindow();
+    Theme.install();
   }
 
   get isAdmin() { return !!this.me && this.me.role === 'Admin'; }
@@ -153,6 +155,7 @@ export class App {
         <div class="brand"><b>First Holy Communion</b><span>San Isidro Labrador · Cuenca</span></div>
         <nav id="nav"></nav>
         <div class="me">Signed in as <b>${esc(this.me.username)}</b> <span class="tag">${esc(this.me.role)}</span>
+          ${Theme.button()}
           <button class="btn s" data-shell="password">Change password</button>
           <button class="btn s" data-shell="logout">Sign out</button></div>
       </aside>
@@ -228,9 +231,10 @@ export class App {
     if (this.currentPage) this.currentPage.recordsChanged();
   }
 
+  // Built-in logos first, then anything uploaded in Template → Pictures replaces them
   async loadTemplate() {
-    const t = await this.db.loadTemplate();
-    this.setTemplate(new CertificateTemplate(t.data), t.images);
+    const [t, defaults] = await Promise.all([this.db.loadTemplate(), DefaultImages.load()]);
+    this.setTemplate(new CertificateTemplate(t.data), Object.assign({}, defaults, t.images));
   }
 
   setTemplate(template, images) {
