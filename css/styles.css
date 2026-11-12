@@ -146,6 +146,12 @@ main { padding: 20px 24px 40px; min-width: 0; }
 .auth { min-height: 100vh; display: grid; place-items: center; padding: 20px; background: var(--auth); }
 .auth .card { width: min(400px, 100%); }
 .auth h2 { color: var(--ac); }
+th.sortable { cursor: pointer; user-select: none; white-space: nowrap; }
+th.sortable:hover { color: var(--ac); }
+.imp-ok { color: var(--ac); }
+.imp-bad { color: var(--bad); }
+.imp-dup { color: var(--mu); }
+.auth-logo { display: block; width: 96px; height: 96px; object-fit: contain; margin: 0 auto 10px; animation: none; transition: none; }
 .auth-alt { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 16px 0 6px; padding-top: 14px; border-top: 1px solid var(--line); }
 .pending { border-color: var(--note-line); background: var(--note); margin-bottom: 12px; }
 .pending table td { background: transparent; }

@@ -4,7 +4,7 @@ import { Dates } from '../utils/Dates.js';
 const COLUMNS = [
   ['Id', 'id'], ['CtrlNo', 'ctrl_no'], ['Year', 'year'], ['Seq', 'seq'], ['LastName', 'last_name'],
   ['FirstName', 'first_name'], ['MiddleName', 'middle_name'], ['Suffix', 'suffix'], ['Birthdate', 'birthdate'],
-  ['Birthplace', 'birthplace'], ['Gender', 'gender'], ['FatherName', 'father_name'], ['MotherName', 'mother_name'],
+  ['Birthplace', 'birthplace'], ['Gender', 'gender'], ['School', 'school'], ['FatherName', 'father_name'], ['MotherName', 'mother_name'],
   ['DateBaptized', 'date_baptized'], ['ChurchBaptized', 'church_baptized'], ['BaptismMinister', 'baptism_minister'],
   ['DateCommunion', 'date_communion'], ['CommunionMinister', 'communion_minister'], ['CreatedBy', 'created_by'],
   ['CreatedAt', 'created_at'], ['UpdatedBy', 'updated_by'], ['UpdatedAt', 'updated_at'],
@@ -18,7 +18,7 @@ export class CommunionRecord {
   static FIELDS = [
     ['CtrlNo', 'Control No.'], ['Year', 'Year'], ['LastName', 'Last Name'], ['FirstName', 'First Name'],
     ['MiddleName', 'Middle Name'], ['Suffix', 'Suffix'], ['Birthdate', 'Birthdate'], ['Age', 'Age'],
-    ['Birthplace', 'Birthplace'], ['Gender', 'Gender'], ['FatherName', "Father's Name"], ['MotherName', "Mother's Name"],
+    ['Birthplace', 'Birthplace'], ['Gender', 'Gender'], ['School', 'School'], ['FatherName', "Father's Name"], ['MotherName', "Mother's Name"],
     ['DateBaptized', 'Date Baptized'], ['ChurchBaptized', 'Church Baptized'], ['BaptismMinister', 'Baptism Minister'],
     ['DateCommunion', 'Date Received Communion'], ['CommunionMinister', 'Communion Minister'],
     ['CreatedBy', 'Created By'], ['CreatedAt', 'Created At'], ['UpdatedBy', 'Updated By'], ['UpdatedAt', 'Updated At'],
@@ -63,10 +63,15 @@ export class CommunionRecord {
   // Age at First Communion; if that date is empty, age today
   get age() { return Dates.age(this.Birthdate, this.DateCommunion || Dates.today()); }
 
-  matches(query, year) {
+  // School is for the encoders only (sorting, filters, waybills); it is never on the certificate
+  get schoolLabel() { return this.School || CommunionRecord.NO_SCHOOL; }
+  static NO_SCHOOL = '(No school recorded)';
+
+  matches(query, year, school) {
     if (year && this.Year !== year) return false;
+    if (school && this.schoolLabel !== school) return false;
     const q = (query || '').trim().toLowerCase();
-    return !q || `${this.CtrlNo} ${this.fullName} ${this.LastName}`.toLowerCase().includes(q);
+    return !q || `${this.CtrlNo} ${this.fullName} ${this.LastName} ${this.School}`.toLowerCase().includes(q);
   }
 
   // Returns a problem to show, or '' when the record can be saved

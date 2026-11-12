@@ -3,6 +3,7 @@ import { esc, AppError } from '../utils/helpers.js';
 import { Dates } from '../utils/Dates.js';
 import { Files } from '../utils/Files.js';
 import { RecordFilter } from '../models/RecordFilter.js';
+import { CommunionRecord } from '../models/CommunionRecord.js';
 import { CertificateRenderer } from '../certificate/CertificateRenderer.js';
 import { Printer, CERTIFICATE_PAGE, SLIP_PAGE } from '../certificate/Printer.js';
 import { Slips } from '../certificate/Slips.js';
@@ -26,11 +27,15 @@ export class CertificatePage extends Page {
 
   get focused() { return this.app.recordById(this.focusId); }
 
-  // Ticked records still in the database, in Control No. order (the order they print)
+  // Ticked records still in the database, in the order they print: by school (as on the
+  // waybill, "no school" last), then by name, so each school's certificates come out together
   get selectedRecords() {
+    const none = CommunionRecord.NO_SCHOOL;
     return this.app.records
       .filter(r => this.selected.has(r.Id))
-      .sort((a, b) => String(a.CtrlNo).localeCompare(String(b.CtrlNo)));
+      .sort((a, b) => (a.schoolLabel === none) - (b.schoolLabel === none)
+        || a.schoolLabel.localeCompare(b.schoolLabel, undefined, { sensitivity: 'base' })
+        || RecordFilter.compare(a, b, 'LastName', 'asc'));
   }
 
   render() {
@@ -49,7 +54,8 @@ export class CertificatePage extends Page {
             <button class="btn o" data-action="batch" data-format="PDF">PDF of selected</button>
           </div>
           <p class="mu" style="margin:10px 0 0">Each certificate gets its own Document No. under your name. A batch also gets a
-            <b>waybill</b> listing every certificate, ready to sign when they are handed over.
+            <b>waybill</b> listing every certificate grouped by school, with a count per school, ready to sign when they are handed over.
+            Certificates print in the same order as the waybill. Tip: pick a school above, then <b>Select all shown</b>.
             Print on short bond (8.5 × 11 in), scale 100%, margins none.</p>
         </div>
         <div>
@@ -118,7 +124,8 @@ export class CertificatePage extends Page {
     table.innerHTML = list.map(r => `<tr data-action="focus" data-id="${esc(r.Id)}"
         class="${this.selected.has(r.Id) ? 'on' : ''} ${r.Id === this.focusId ? 'focus' : ''}">
         <td style="width:30px"><input type="checkbox" data-role="tick" data-id="${esc(r.Id)}" ${this.selected.has(r.Id) ? 'checked' : ''}></td>
-        <td class="mono">${esc(r.CtrlNo)}</td><td>${esc(r.sortName)}</td><td><small>${esc(Dates.short(r.DateCommunion))}</small></td></tr>`).join('')
+        <td class="mono">${esc(r.CtrlNo)}</td><td>${esc(r.sortName)}${r.School ? `<br><small class="mu">${esc(r.School)}</small>` : ''}</td>
+        <td><small>${esc(Dates.short(r.DateCommunion))}</small></td></tr>`).join('')
       || '<tr><td class="mu">No matching records.</td></tr>';
     this.view.querySelector('[data-role=count]').textContent = `${list.length} shown`;
     this.view.querySelector('[data-role=selected]').textContent = `${this.selected.size} selected`;

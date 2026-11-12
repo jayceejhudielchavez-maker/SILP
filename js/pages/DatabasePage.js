@@ -18,7 +18,7 @@ export class DatabasePage extends RecordsPage {
     const admin = this.app.isAdmin;
     this.view.innerHTML = `
       <div class="card" style="margin-bottom:12px">
-        <div class="row"><b>Download</b><span class="mu">Excel, PDF and CSV use the search and year filter below. The JSON backup always has everything.</span></div>
+        <div class="row"><b>Download</b><span class="mu">Excel, PDF and CSV use the search, filters and sort order below. The JSON backup always has everything.</span></div>
         <div class="row" style="margin-top:8px">
           <button class="btn o" data-action="xlsx">Excel (.xlsx)</button>
           <button class="btn o" data-action="pdf">PDF</button>
@@ -56,10 +56,10 @@ export class DatabasePage extends RecordsPage {
     const admin = this.app.isAdmin;
     const cell = (r, k) => k === 'Age' ? r.age : /At$/.test(k) ? Dates.stamp(r[k]) : r[k];
     return `<table style="font-size:13px;white-space:nowrap">
-      <tr>${CommunionRecord.FIELDS.map(([, l]) => `<th>${l}</th>`).join('')}${admin ? '<th></th>' : ''}</tr>
+      <tr>${CommunionRecord.FIELDS.map(([k, l]) => this.filter.th(k, l)).join('')}${admin ? '<th></th>' : ''}</tr>
       ${list.map(r => `<tr>${CommunionRecord.FIELDS.map(([k]) => `<td>${esc(cell(r, k))}</td>`).join('')}
         ${admin ? `<td><button class="btn s g" data-action="delete" data-id="${esc(r.Id)}">Delete</button></td>` : ''}</tr>`).join('')
-        || `<tr><td colspan="${CommunionRecord.FIELDS.length}" class="mu">No matching records.</td></tr>`}</table>`;
+        || `<tr><td colspan="${CommunionRecord.FIELDS.length + 1}" class="mu">No matching records.</td></tr>`}</table>`;
   }
 
   async drawBackups() {

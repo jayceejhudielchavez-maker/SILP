@@ -17,6 +17,7 @@ export class Files {
       input.type = 'file';
       input.accept = accept;
       input.onchange = () => resolve(input.files[0] || null);
+      input.oncancel = () => resolve(null);   // closing the chooser frees the button again
       input.click();
     });
   }

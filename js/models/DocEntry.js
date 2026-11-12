@@ -14,6 +14,7 @@ export class DocEntry {
     this.by = row.by_user;                    // username
     this.byName = row.by_name || row.by_user; // full name of the encoder (older entries may only have the username)
     this.at = row.at;
+    this.school = row.school || '';           // certificates in a batch: the child's school when issued (for the waybill)
   }
 
   matches(query) {

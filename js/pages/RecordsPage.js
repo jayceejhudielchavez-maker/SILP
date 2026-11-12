@@ -32,6 +32,11 @@ export class RecordsPage extends Page {
       certificate: el => this.app.openCertificate(el.dataset.id),
       edit: el => this.app.editRecord(el.dataset.id),
       delete: el => this.app.deleteRecord(el.dataset.id),
+      sortBy: el => {
+        this.filter.sortBy(el.dataset.key);
+        this.filter.syncControls(this.view);
+        this.drawTable();
+      },
     };
   }
 
@@ -45,15 +50,17 @@ export class RecordsPage extends Page {
 
   tableHtml(list) {
     const admin = this.app.isAdmin;
-    return `<table><tr><th>Ctrl No.</th><th>Name</th><th>Gender</th><th>Birthdate</th><th>First Communion</th><th>Last updated</th><th></th></tr>
+    const f = this.filter;
+    return `<table><tr>${f.th('CtrlNo', 'Ctrl No.')}${f.th('LastName', 'Name')}${f.th('School', 'School')}${f.th('Gender', 'Gender')}
+        ${f.th('Birthdate', 'Birthdate')}${f.th('DateCommunion', 'First Communion')}${f.th('UpdatedAt', 'Last updated')}<th></th></tr>
       ${list.map(r => `<tr>
-        <td class="mono">${esc(r.CtrlNo)}</td><td>${esc(r.sortName)}</td><td>${esc(r.Gender)}</td>
+        <td class="mono">${esc(r.CtrlNo)}</td><td>${esc(r.sortName)}</td><td>${r.School ? esc(r.School) : '<span class="mu">—</span>'}</td><td>${esc(r.Gender)}</td>
         <td>${esc(Dates.short(r.Birthdate))}</td><td>${esc(Dates.short(r.DateCommunion))}</td>
         <td><small>${esc(Dates.stamp(r.UpdatedAt))}<br>by ${esc(r.UpdatedBy)}</small></td>
         <td style="white-space:nowrap">
           <button class="btn s" data-action="certificate" data-id="${esc(r.Id)}">Certificate</button>
           <button class="btn s o" data-action="edit" data-id="${esc(r.Id)}">Edit</button>
           ${admin ? `<button class="btn s g" data-action="delete" data-id="${esc(r.Id)}">Delete</button>` : ''}
-        </td></tr>`).join('') || '<tr><td colspan="7" class="mu">No matching records.</td></tr>'}</table>`;
+        </td></tr>`).join('') || '<tr><td colspan="8" class="mu">No matching records.</td></tr>'}</table>`;
   }
 }

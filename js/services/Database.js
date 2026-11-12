@@ -101,7 +101,7 @@ export class Database {
   async logCertificateBatch(format, records) {
     const res = await this.rpc('log_certificate_batch', {
       p_format: format,
-      p_items: records.map(r => ({ ctrl: r.CtrlNo, name: r.fullName })),
+      p_items: records.map(r => ({ ctrl: r.CtrlNo, name: r.fullName, school: r.School })),   // school: for the waybill only
     });
     return { batch: new DocEntry(res.batch), items: res.items.map(row => new DocEntry(row)) };
   }

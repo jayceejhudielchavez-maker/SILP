@@ -2,8 +2,10 @@ import { Page } from './Page.js';
 import { $, esc, num } from '../utils/helpers.js';
 import { Dates } from '../utils/Dates.js';
 import { CommunionRecord } from '../models/CommunionRecord.js';
+import { RecordFilter } from '../models/RecordFilter.js';
+import { ExcelEncoder, TEMPLATE_URL } from '../services/ExcelEncoding.js';
 
-const FORM_KEYS = ['Year', 'LastName', 'FirstName', 'MiddleName', 'Suffix', 'Birthdate', 'Birthplace', 'Gender',
+const FORM_KEYS = ['Year', 'LastName', 'FirstName', 'MiddleName', 'Suffix', 'Birthdate', 'Birthplace', 'Gender', 'School',
   'FatherName', 'MotherName', 'DateBaptized', 'ChurchBaptized', 'BaptismMinister', 'DateCommunion', 'CommunionMinister'];
 
 // New Entry: add a communicant, or edit one (its Control No. never changes)
@@ -11,6 +13,7 @@ export class EntryPage extends Page {
   constructor(app) {
     super(app, 'New Entry');
     this.editing = null;   // the CommunionRecord being edited, or null for a new one
+    this.excel = new ExcelEncoder(app);
   }
 
   edit(record) {
@@ -27,6 +30,13 @@ export class EntryPage extends Page {
 
     this.view.innerHTML = `
       <div id="formNote"></div>
+      ${editing ? '' : `<div class="card" style="margin-bottom:12px">
+        <div class="row"><b>Encode many at once from Excel</b>
+          <span class="mu">Fill in the template, then upload it. Each row becomes a new record with its own Control No.</span></div>
+        <div class="row" style="margin-top:8px">
+          <a class="btn o" href="${TEMPLATE_URL}" download>Download Excel template</a>
+          <button class="btn" data-action="uploadExcel">Upload filled Excel…</button>
+        </div></div>`}
       ${editing ? `<div class="note" style="margin-bottom:12px">Editing <b class="mono">${esc(r.CtrlNo)}</b>. The Control No. and year stay the same.
         <button class="btn s o" data-action="clear">Cancel editing</button></div>` : ''}
       <div class="card">
@@ -45,6 +55,13 @@ export class EntryPage extends Page {
             ${['', 'Male', 'Female'].map(g => `<option value="${g}" ${r.Gender === g ? 'selected' : ''}>${g || 'Select…'}</option>`).join('')}</select></div>
         </div>
         <div class="grid g2">${input('FatherName', "Father's Name")}${input('MotherName', "Mother's Name")}</div>
+        <div class="grid g2"><div>
+          <label for="f_School">School</label>
+          <input id="f_School" data-field="School" list="schoolList" value="${esc(r.School)}" placeholder="Start typing to pick a school already used">
+          <datalist id="schoolList">${RecordFilter.schools(this.app.records).filter(s => s !== CommunionRecord.NO_SCHOOL)
+            .map(s => `<option value="${esc(s)}">`).join('')}</datalist>
+          <small>For sorting and the waybill only. It is not printed on the certificate.</small>
+        </div></div>
         <h3 style="margin-top:18px">Baptism</h3>
         <div class="grid g3">${input('DateBaptized', 'Date Baptized', 'date')}${input('ChurchBaptized', 'Church Baptized')}${input('BaptismMinister', 'Minister', 'text', minister)}</div>
         <h3 style="margin-top:18px">First Holy Communion</h3>
@@ -64,6 +81,7 @@ export class EntryPage extends Page {
       save: btn => this.#save(btn, false),
       saveAndCertificate: btn => this.#save(btn, true),
       clear: () => this.clear(),
+      uploadExcel: btn => this.app.busy(btn, () => this.excel.start()),
     };
   }
 
@@ -92,6 +110,7 @@ export class EntryPage extends Page {
   #readForm() {
     const r = this.editing ? this.editing.clone() : CommunionRecord.blank();
     for (const k of FORM_KEYS) r[k] = $('f_' + k).value.trim();
+    r.School = RecordFilter.matchSchool(r.School, this.app.records);
     return r;
   }
 

@@ -12,8 +12,9 @@ export class AuthView {
 
   #card(inner, actions) {
     this.#root.innerHTML = `<div class="auth">${Theme.button()}<div class="card">
-      <div class="mu" style="font-size:12px">Archdiocese of Lipa</div>
-      <b style="display:block;margin-bottom:12px">${PARISH} · ${PARISH_PLACE}</b>
+      <img class="auth-logo" src="img/parish-logo.png" alt="Parish logo">
+      <div class="mu" style="font-size:12px;text-align:center">Archdiocese of Lipa</div>
+      <b style="display:block;margin-bottom:12px;text-align:center">${PARISH} · ${PARISH_PLACE}</b>
       ${inner}</div></div>`;
     // Clicks and the Enter key call the matching action
     this.#root.onclick = e => {

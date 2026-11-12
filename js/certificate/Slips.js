@@ -27,34 +27,60 @@ export class Slips {
         <b style="font-size:18px">${title}</b><span style="font:700 18px Consolas,monospace">${esc(docNo)}</span></div>`;
   }
 
-  // Released By: <full name of the encoder>
-  // Received By: ____________ (Name and Signature)   Date: ________
+  // All on one row to save paper:
+  // Released By: <encoder's name, centered>   Received By: ____________   Date: ______
   static #signatures(releasedBy) {
-    return `<div style="margin-top:34px;display:grid;grid-template-columns:auto 1fr;gap:26px 10px;align-items:end;font-size:13px">
-      <b>Released By:</b>
-      <div style="max-width:330px"><div style="${LINE}">${esc(releasedBy)}</div><div style="${CAPTION}">Name and Signature</div></div>
-      <b>Received By:</b>
-      <div style="display:grid;grid-template-columns:minmax(0,330px) auto 160px;gap:10px;align-items:end">
-        <div><div style="${LINE}"></div><div style="${CAPTION}">Name and Signature</div></div>
-        <b>Date:</b>
-        <div><div style="${LINE}"></div><div style="${CAPTION}">&nbsp;</div></div>
-      </div>
+    const field = (label, value, width) => `<div style="display:grid;grid-template-columns:auto ${width};gap:6px;align-items:end">
+        <b style="padding-bottom:17px;white-space:nowrap">${label}</b>
+        <div style="min-width:0"><div style="${LINE};text-align:center">${value}</div><div style="${CAPTION}">${label === 'Date:' ? '&nbsp;' : 'Name and Signature'}</div></div>
+      </div>`;
+    return `<div style="margin-top:28px;display:grid;grid-template-columns:1fr 1fr auto;gap:14px;align-items:end;font-size:13px">
+      ${field('Released By:', esc(releasedBy), '1fr')}
+      ${field('Received By:', '', '1fr')}
+      ${field('Date:', '', '90px')}
     </div>`;
   }
 
-  // batch: the batch DocEntry; entries: the certificate DocEntries in print order
+  // Looks up a child's school by Control No. (set by App). Used for batches logged before
+  // schools were kept in the Document Log.
+  static schoolOf = () => '';
+
+  // batch: the batch DocEntry; entries: the certificate DocEntries in print order.
+  // Grouped by school (A→Z, "no school" last) with a count per school, so the staff can see
+  // how many from each school received communion and who they are.
   static batchWaybill(batch, entries) {
-    const rows = entries.map((d, i) => `<tr>
-        <td style="${CELL};width:34px">${i + 1}</td>
+    const NONE = '(No school recorded)';
+    const groups = new Map();
+    for (const d of entries) {
+      const school = d.school || Slips.schoolOf(d.ctrl) || NONE;
+      if (!groups.has(school)) groups.set(school, []);
+      groups.get(school).push(d);
+    }
+    const order = [...groups.keys()].sort((a, b) => (a === NONE) - (b === NONE) || a.localeCompare(b, undefined, { sensitivity: 'base' }));
+
+    const summary = order.map(s => `<tr><td style="${CELL}">${esc(s)}</td>
+        <td style="${CELL};text-align:center;width:90px">${groups.get(s).length}</td></tr>`).join('');
+
+    let n = 0;
+    const rows = order.map(s => `<tr><td colspan="4" style="${CELL};background:#eee;font-weight:700">
+          ${esc(s)} <span style="font-weight:400">· ${groups.get(s).length}</span></td></tr>` +
+      groups.get(s).map(d => `<tr>
+        <td style="${CELL};width:34px">${++n}</td>
         <td style="${CELL};font-family:Consolas,monospace">${esc(d.docNo)}</td>
         <td style="${CELL};font-family:Consolas,monospace">${esc(d.ctrl)}</td>
-        <td style="${CELL}">${esc(d.name)}</td></tr>`).join('');
+        <td style="${CELL}">${esc(d.name)}</td></tr>`).join('')).join('');
+
     return `<div style="${STYLE}">
       ${Slips.#header('Certificate Release Waybill', batch.docNo)}
       <table style="width:100%;margin-top:10px;font-size:13px"><tr>
-        <td><b>Certificates:</b> ${entries.length}</td><td><b>Encoded by:</b> ${esc(batch.byName)}</td>
-        <td><b>Date:</b> ${esc(Dates.stamp(batch.at))}</td></tr></table>
-      <table style="width:100%;border-collapse:collapse;margin-top:10px;font-size:12px">
+        <td><b>Certificates:</b> ${entries.length}</td><td><b>Schools:</b> ${order.length}</td>
+        <td><b>Encoded by:</b> ${esc(batch.byName)}</td><td><b>Date:</b> ${esc(Dates.stamp(batch.at))}</td></tr></table>
+      <table style="width:60%;border-collapse:collapse;margin-top:10px;font-size:12px">
+        <tr><th style="${CELL}">School</th><th style="${CELL};text-align:center">Communicants</th></tr>
+        ${summary}
+        <tr><td style="${CELL};font-weight:700">Total</td><td style="${CELL};text-align:center;font-weight:700">${entries.length}</td></tr>
+      </table>
+      <table style="width:100%;border-collapse:collapse;margin-top:12px;font-size:12px">
         <tr><th style="${CELL}">#</th><th style="${CELL}">Document No.</th><th style="${CELL}">Ctrl No.</th>
           <th style="${CELL}">Name of communicant</th></tr>
         ${rows}

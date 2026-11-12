@@ -49,6 +49,7 @@ export class App {
       .map(PageClass => { const page = new PageClass(this); return [page.name, page]; }));
 
     this.errors.watchWindow();
+    Slips.schoolOf = ctrl => this.schoolOf(ctrl);
     Theme.install();
     PasswordReveal.install(document.body);
   }
@@ -262,6 +263,12 @@ export class App {
     this.images = images || {};
     this.fonts.ensure(template);
     Slips.logo = this.images.parishLogo || '';   // waybills and slips show the parish logo
+  }
+
+  // For waybills printed before schools were kept in the Document Log: look the school up by Control No.
+  schoolOf(ctrlNo) {
+    const r = this.records.find(x => x.CtrlNo === ctrlNo);
+    return r ? r.School : '';
   }
 
   renderer() {

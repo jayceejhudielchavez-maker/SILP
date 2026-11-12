@@ -5,6 +5,7 @@ import { Libraries } from '../utils/Libraries.js';
 import { PARISH, PARISH_PLACE } from '../config.js';
 import { CommunionRecord } from '../models/CommunionRecord.js';
 import { CertificateTemplate } from '../certificate/CertificateTemplate.js';
+import { Spreadsheet } from './ExcelEncoding.js';
 
 // Downloads. Each one is written to the Document Log first, so it is known who exported what.
 export class Exporter {
@@ -56,7 +57,7 @@ export class Exporter {
     pdf.text(`${PARISH} · ${PARISH_PLACE}`, 36, 34);
     pdf.setFontSize(9);
     pdf.text(`First Holy Communion records · ${list.length} record(s) · ${doc.docNo} · prepared by ${doc.byName} · ${Dates.stamp(doc.at)}`, 36, 50);
-    const cols = [['CtrlNo', 'Ctrl No.'], ['Name', 'Name'], ['Gender', 'Gender'], ['Birthdate', 'Birthdate'], ['Age', 'Age'],
+    const cols = [['CtrlNo', 'Ctrl No.'], ['Name', 'Name'], ['School', 'School'], ['Gender', 'Gender'], ['Birthdate', 'Birthdate'], ['Age', 'Age'],
       ['Birthplace', 'Birthplace'], ['FatherName', 'Father'], ['MotherName', 'Mother'], ['DateBaptized', 'Baptized'],
       ['ChurchBaptized', 'Church'], ['BaptismMinister', 'Bapt. Minister'], ['DateCommunion', 'Communion'],
       ['CommunionMinister', 'Comm. Minister'], ['UpdatedBy', 'Updated by']];
@@ -95,9 +96,7 @@ export class Importer {
       template = json.template || null;
       images = json.images || null;
     } else {
-      await Libraries.load('xlsx');
-      const book = window.XLSX.read(await file.arrayBuffer(), { cellDates: true });
-      rows = window.XLSX.utils.sheet_to_json(book.Sheets[book.SheetNames[0]], { raw: false, defval: '', dateNF: 'yyyy-mm-dd' });
+      rows = await Spreadsheet.readRows(file);   // finds the header row, so the encoding template works here too
     }
     const records = rows.map(r => CommunionRecord.fromImport(r)).filter(r => r.LastName || r.FirstName);
     if (!records.length) {
