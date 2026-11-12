@@ -91,6 +91,7 @@ export class Slips {
 
   static #slip(d) {
     const rows = [['Certificate', 'First Communion'], ['Control No.', d.ctrl], ['Name', d.name],
+      ['School', d.school || Slips.schoolOf(d.ctrl)],   // staff paper only; never on the certificate
       ['Printed as', d.type.replace(/^Certificate \((.*)\)$/, '$1')], ['Encoded by', d.byName], ['Date and time', Dates.stamp(d.at)],
       ['Batch', d.detail.replace(/^Batch /, '')]].filter(([, v]) => v);
     return `<div style="${STYLE};height:4.75in;overflow:hidden">

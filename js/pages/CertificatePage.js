@@ -184,14 +184,15 @@ export class CertificatePage extends Page {
     this.app.modal.open(`<h3>${batch ? `Batch ${esc(batch.docNo)} · ` : ''}${count} certificate${count === 1 ? '' : 's'} issued</h3>
       <p>${batch ? `Each certificate has its own Document No. (${esc(items[0].docNo)}${count > 1 ? ` to ${esc(items[count - 1].docNo)}` : ''}).
         Print the <b>waybill</b> to go with the batch, and a <b>release slip</b> for each family if you use them.`
-        : `Document No. <b>${esc(items[0].docNo)}</b>. Print a <b>release slip</b> to go with it if you use them.`}</p>
+        : `Document No. <b>${esc(items[0].docNo)}</b>. Print the <b>waybill</b> to sign when it is handed over, and a <b>release slip</b> if you use them.`}</p>
       <p class="mu">You can reprint these any time from the Documents page.</p>
       <div class="actions">
         <button class="btn o" data-action="close">Done</button>
         <button class="btn o" data-action="slips">Release slip${count === 1 ? '' : `s (${count})`}</button>
-        ${batch ? '<button class="btn" data-action="waybill">Print waybill</button>' : ''}
+        <button class="btn" data-action="waybill">Print waybill</button>
       </div>`, {
-      waybill: () => Printer.print([Slips.batchWaybill(batch, items)], SLIP_PAGE),
+      // A single certificate's waybill uses that certificate's own Document No.
+      waybill: () => Printer.print([Slips.batchWaybill(batch || items[0], items)], SLIP_PAGE),
       slips: () => Printer.print(Slips.releaseSlips(items), SLIP_PAGE),
     });
   }

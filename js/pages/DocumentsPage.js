@@ -34,7 +34,10 @@ export class DocumentsPage extends Page {
   }
 
   actions() {
-    return { slip: el => this.printSlip(el.dataset.doc) };
+    return {
+      slip: el => this.printSlip(el.dataset.doc),
+      waybill: el => this.printWaybill(el.dataset.doc),
+    };
   }
 
   onInput(e) {
@@ -55,12 +58,23 @@ export class DocumentsPage extends Page {
       ${list.map(d => `<tr><td class="mono">${esc(d.docNo)}</td><td>${esc(d.type)}</td>
         <td>${d.ctrl ? `<span class="mono">${esc(d.ctrl)}</span><br>` : ''}${esc(d.name)}</td><td><small>${esc(d.detail)}</small></td>
         <td>${esc(d.byName)}${d.byName !== d.by ? `<br><small class="mono">${esc(d.by)}</small>` : ''}</td><td>${esc(Dates.stamp(d.at))}</td>
-        <td><button class="btn s o" data-action="slip" data-doc="${esc(d.docNo)}">${DocumentsPage.#isBatch(d) ? 'Print waybill' : 'Print slip'}</button></td></tr>`).join('')
+        <td style="white-space:nowrap"><button class="btn s o" data-action="slip" data-doc="${esc(d.docNo)}">${DocumentsPage.#isBatch(d) ? 'Print waybill' : 'Print slip'}</button>
+          ${DocumentsPage.#isSingle(d) ? `<button class="btn s o" data-action="waybill" data-doc="${esc(d.docNo)}">Print waybill</button>` : ''}</td></tr>`).join('')
         || '<tr><td colspan="7" class="mu">Nothing logged yet.</td></tr>'}</table>`;
   }
 
   static #isBatch(d) {
     return d.type.startsWith('Certificate batch');
+  }
+
+  // A certificate printed on its own ("Print this one"), not as part of a batch
+  static #isSingle(d) {
+    return d.type.startsWith('Certificate (') && !d.detail.startsWith('Batch ');
+  }
+
+  printWaybill(docNo) {
+    const d = this.docs.find(x => x.docNo === docNo);
+    if (d) return Printer.print([Slips.batchWaybill(d, [d])], SLIP_PAGE);
   }
 
   // Batches reprint their waybill; single certificates their release slip; anything else a document slip
