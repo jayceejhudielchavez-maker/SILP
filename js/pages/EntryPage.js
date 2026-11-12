@@ -41,7 +41,10 @@ export class EntryPage extends Page {
         <button class="btn s o" data-action="clear">Cancel editing</button></div>` : ''}
       <div class="card">
         <div class="grid g4">
-          ${input('Year', 'Year', 'number', `min="1900" max="2100" ${editing ? 'readonly' : ''}`)}
+          <div><label for="f_Year">Year</label>
+            <select id="f_Year" data-field="Year" ${editing ? 'disabled title="The year of a saved record cannot change"' : ''}>
+              ${EntryPage.#years(r.Year).map(y => `<option ${y === r.Year ? 'selected' : ''}>${y}</option>`).join('')}
+            </select></div>
           <div><label>Control No.</label><input readonly value="${editing ? esc(r.CtrlNo) : ''}" placeholder="${editing ? '' : 'Automatic'}">
             <small id="ctrlHint"></small></div>
         </div>
@@ -74,6 +77,15 @@ export class EntryPage extends Page {
       </div>`;
     this.#updateAge();
     this.#updateCtrlHint();
+  }
+
+  // Next year down to 1950 (for old records being encoded), newest first; keeps an older year if editing one
+  static #years(current) {
+    const top = new Date().getFullYear() + 1;
+    const list = [];
+    for (let y = top; y >= 1950; y--) list.push(String(y));
+    if (current && !list.includes(current)) list.push(current);
+    return list;
   }
 
   actions() {
