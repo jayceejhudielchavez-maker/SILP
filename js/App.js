@@ -50,6 +50,7 @@ export class App {
 
     this.errors.watchWindow();
     Slips.schoolOf = ctrl => this.schoolOf(ctrl);
+    Slips.encoderOf = ctrl => this.encoderOf(ctrl);
     Theme.install();
     PasswordReveal.install(document.body);
   }
@@ -269,6 +270,13 @@ export class App {
   schoolOf(ctrlNo) {
     const r = this.records.find(x => x.CtrlNo === ctrlNo);
     return r ? r.School : '';
+  }
+
+  // Who encoded a record (its Created By), looked up by Control No. for waybills and slips.
+  // Not the person printing: that is the Document Log entry's own name.
+  encoderOf(ctrlNo) {
+    const r = this.records.find(x => x.CtrlNo === ctrlNo);
+    return r ? r.CreatedBy : '';
   }
 
   renderer() {

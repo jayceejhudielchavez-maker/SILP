@@ -4,7 +4,8 @@ import { CommunionRecord } from './CommunionRecord.js';
 // Every attribute a list can be sorted by: [key, label]
 const SORTS = [
   ['CtrlNo', 'Control No.'], ['LastName', 'Last Name'], ['FirstName', 'First Name'], ['MiddleName', 'Middle Name'],
-  ['Suffix', 'Suffix'], ['School', 'School'], ['Gender', 'Gender'], ['Birthdate', 'Birthdate'], ['Age', 'Age'],
+  ['Suffix', 'Suffix'], ['SchoolGradeSection', 'School → Grade → Section'], ['School', 'School'], ['Grade', 'Grade'],
+  ['Section', 'Section'], ['Gender', 'Gender'], ['Birthdate', 'Birthdate'], ['Age', 'Age'],
   ['Birthplace', 'Birthplace'], ['FatherName', "Father's Name"], ['MotherName', "Mother's Name"],
   ['DateBaptized', 'Date Baptized'], ['ChurchBaptized', 'Church Baptized'], ['BaptismMinister', 'Baptism Minister'],
   ['DateCommunion', 'Date Received Communion'], ['CommunionMinister', 'Communion Minister'], ['Year', 'Year'],
@@ -12,6 +13,14 @@ const SORTS = [
 ];
 const NUMERIC = new Set(['Age', 'Year']);
 const text = new Intl.Collator(undefined, { sensitivity: 'base', numeric: true });
+
+// Kinder first, then Grade 1, 2 … 10, 11, 12 by number (so "Grade 10" comes after "Grade 9"); anything else last
+function gradeRank(g) {
+  const s = String(g).trim().toLowerCase();
+  if (/^(nursery|pre|kinder|k$|k\d)/.test(s)) return 0;
+  const n = /\d+/.exec(s);
+  return n ? Number(n[0]) : 1000;
+}
 
 // Search text + year + school + sort order, shared by the Records, Database and Certificate pages
 export class RecordFilter {
@@ -30,15 +39,26 @@ export class RecordFilter {
     return r[key];
   }
 
-  // Blanks always go last; ties fall back to the name, then the Control No.
-  static compare(a, b, key, dir) {
+  // One attribute: blanks always go last (whatever the direction)
+  static #one(a, b, key, dir) {
     const va = RecordFilter.value(a, key), vb = RecordFilter.value(b, key);
     const ea = va === '' || va === null || va === undefined, eb = vb === '' || vb === null || vb === undefined;
     if (ea !== eb) return ea ? 1 : -1;
-    let c = 0;
-    if (!ea) c = NUMERIC.has(key) ? Number(va) - Number(vb) : text.compare(String(va), String(vb));
-    if (dir === 'desc') c = -c;
-    return c || text.compare(a.sortName, b.sortName) || String(a.CtrlNo).localeCompare(String(b.CtrlNo));
+    if (ea) return 0;
+    let c = key === 'Grade' ? gradeRank(va) - gradeRank(vb) || text.compare(String(va), String(vb))
+      : NUMERIC.has(key) ? Number(va) - Number(vb) : text.compare(String(va), String(vb));
+    return dir === 'desc' ? -c : c;
+  }
+
+  // "School → Grade → Section" sorts by school, then grade inside each school, then section inside each grade.
+  // Ties fall back to the name, then the Control No.
+  static compare(a, b, key, dir) {
+    const keys = key === 'SchoolGradeSection' ? ['School', 'Grade', 'Section'] : [key];
+    for (const k of keys) {
+      const c = RecordFilter.#one(a, b, k, dir);
+      if (c) return c;
+    }
+    return text.compare(a.sortName, b.sortName) || String(a.CtrlNo).localeCompare(String(b.CtrlNo));
   }
 
   apply(records) {
@@ -61,6 +81,11 @@ export class RecordFilter {
   static schools(records) {
     const names = [...new Set(records.map(r => r.School).filter(Boolean))].sort(text.compare);
     return records.some(r => !r.School) ? [...names, CommunionRecord.NO_SCHOOL] : names;
+  }
+
+  // Grades and sections already used, for the form's suggestion lists
+  static sections(records) {
+    return [...new Set(records.map(r => r.Section).filter(Boolean))].sort(text.compare);
   }
 
   // "cuenca  central school" → "Cuenca Central School" if that spelling is already used, so the

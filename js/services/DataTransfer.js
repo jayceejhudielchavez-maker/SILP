@@ -57,7 +57,7 @@ export class Exporter {
     pdf.text(`${PARISH} · ${PARISH_PLACE}`, 36, 34);
     pdf.setFontSize(9);
     pdf.text(`First Holy Communion records · ${list.length} record(s) · ${doc.docNo} · prepared by ${doc.byName} · ${Dates.stamp(doc.at)}`, 36, 50);
-    const cols = [['CtrlNo', 'Ctrl No.'], ['Name', 'Name'], ['School', 'School'], ['Gender', 'Gender'], ['Birthdate', 'Birthdate'], ['Age', 'Age'],
+    const cols = [['CtrlNo', 'Ctrl No.'], ['Name', 'Name'], ['School', 'School'], ['Grade', 'Grade'], ['Section', 'Section'], ['Gender', 'Gender'], ['Birthdate', 'Birthdate'], ['Age', 'Age'],
       ['Birthplace', 'Birthplace'], ['FatherName', 'Father'], ['MotherName', 'Mother'], ['DateBaptized', 'Baptized'],
       ['ChurchBaptized', 'Church'], ['BaptismMinister', 'Bapt. Minister'], ['DateCommunion', 'Communion'],
       ['CommunionMinister', 'Comm. Minister'], ['UpdatedBy', 'Updated by']];

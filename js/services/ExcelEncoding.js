@@ -16,6 +16,7 @@ const ALIASES = {
   'date of baptism': 'date baptized', 'baptism date': 'date baptized', 'church of baptism': 'church baptized',
   'date of communion': 'date received communion', 'date of first communion': 'date received communion',
   'communion date': 'date received communion', 'ctrl no.': 'control no.', 'control no': 'control no.',
+  'grade level': 'grade', 'year level': 'grade', 'adult baptized': 'adult baptism', 'convert to catholic': 'convert',
   'school name': 'school', 'name of school': 'school', 'paaralan': 'school',
 };
 const DATE_COLUMNS = new Set(['birthdate', 'date baptized', 'date received communion']);
@@ -169,8 +170,8 @@ export class ExcelEncoder {
       ${bad ? `<div class="note bad" style="margin-bottom:10px">Rows marked <b>Fix in Excel</b> will not be saved. Correct them in the file and upload it again.
         The rows saved this time will then show as duplicates, so nobody is saved twice.</div>` : ''}
       <div class="tw" style="max-height:45vh"><table style="font-size:13px">
-        <tr><th>Excel row</th><th>Name</th><th>School</th><th>Gender</th><th>Birthdate</th><th>Communion</th><th>Status</th></tr>
-        ${items.map(i => `<tr><td class="mono">${i.row}</td><td>${esc(i.record.sortName)}</td><td>${esc(i.record.School)}</td><td>${esc(i.record.Gender)}</td>
+        <tr><th>Excel row</th><th>Name</th><th>School</th><th>Grade</th><th>Section</th><th>Gender</th><th>Birthdate</th><th>Communion</th><th>Status</th></tr>
+        ${items.map(i => `<tr><td class="mono">${i.row}</td><td>${esc(i.record.sortName)}</td><td>${esc(i.record.School)}</td><td>${esc(i.record.Grade)}</td><td>${esc(i.record.Section)}</td><td>${esc(i.record.Gender)}</td>
           <td>${esc(date(i.record.Birthdate))}</td><td>${esc(date(i.record.DateCommunion))}</td>
           <td><b class="imp-${i.status}">${label[i.status]}</b>${i.note ? `<br><small>${esc(i.note)}</small>` : ''}</td></tr>`).join('')}
       </table></div>

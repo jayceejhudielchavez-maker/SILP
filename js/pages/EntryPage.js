@@ -5,7 +5,8 @@ import { CommunionRecord } from '../models/CommunionRecord.js';
 import { RecordFilter } from '../models/RecordFilter.js';
 import { ExcelEncoder, TEMPLATE_URL } from '../services/ExcelEncoding.js';
 
-const FORM_KEYS = ['Year', 'LastName', 'FirstName', 'MiddleName', 'Suffix', 'Birthdate', 'Birthplace', 'Gender', 'School',
+const GRADES = ['Kinder', ...Array.from({ length: 12 }, (_, i) => `Grade ${i + 1}`)];
+const FORM_KEYS = ['Year', 'LastName', 'FirstName', 'MiddleName', 'Suffix', 'Birthdate', 'Birthplace', 'Gender', 'School', 'Grade', 'Section',
   'FatherName', 'MotherName', 'DateBaptized', 'ChurchBaptized', 'BaptismMinister', 'DateCommunion', 'CommunionMinister'];
 
 // New Entry: add a communicant, or edit one (its Control No. never changes)
@@ -65,6 +66,20 @@ export class EntryPage extends Page {
             .map(s => `<option value="${esc(s)}">`).join('')}</datalist>
           <small>For sorting and the waybill only. It is not printed on the certificate.</small>
         </div></div>
+        <div class="grid g4">
+          <div><label for="f_Grade">Grade</label>
+            <input id="f_Grade" data-field="Grade" list="gradeList" value="${esc(r.Grade)}" placeholder="e.g. Grade 4">
+            <datalist id="gradeList">${GRADES.map(g => `<option value="${esc(g)}">`).join('')}</datalist></div>
+          <div><label for="f_Section">Section</label>
+            <input id="f_Section" data-field="Section" list="sectionList" value="${esc(r.Section)}" placeholder="e.g. Sampaguita">
+            <datalist id="sectionList">${RecordFilter.sections(this.app.records).map(s => `<option value="${esc(s)}">`).join('')}</datalist></div>
+        </div>
+        <h3 style="margin-top:18px">Type of communicant</h3>
+        <p class="mu" style="margin:0 0 6px">Tick all that apply. Leave both empty for an ordinary communicant.</p>
+        <div class="row" style="gap:24px">
+          <label style="display:flex;align-items:center;gap:8px;margin:0"><input type="checkbox" id="f_AdultBaptism" style="width:auto" ${r.AdultBaptism ? 'checked' : ''}> Adult baptism</label>
+          <label style="display:flex;align-items:center;gap:8px;margin:0"><input type="checkbox" id="f_Convert" style="width:auto" ${r.Convert ? 'checked' : ''}> Convert</label>
+        </div>
         <h3 style="margin-top:18px">Baptism</h3>
         <div class="grid g3">${input('DateBaptized', 'Date Baptized', 'date')}${input('ChurchBaptized', 'Church Baptized')}${input('BaptismMinister', 'Minister', 'text', minister)}</div>
         <h3 style="margin-top:18px">First Holy Communion</h3>
@@ -123,6 +138,8 @@ export class EntryPage extends Page {
     const r = this.editing ? this.editing.clone() : CommunionRecord.blank();
     for (const k of FORM_KEYS) r[k] = $('f_' + k).value.trim();
     r.School = RecordFilter.matchSchool(r.School, this.app.records);
+    r.AdultBaptism = $('f_AdultBaptism').checked ? 'Yes' : '';
+    r.Convert = $('f_Convert').checked ? 'Yes' : '';
     return r;
   }
 

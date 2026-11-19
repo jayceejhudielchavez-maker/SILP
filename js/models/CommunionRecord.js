@@ -4,13 +4,17 @@ import { Dates } from '../utils/Dates.js';
 const COLUMNS = [
   ['Id', 'id'], ['CtrlNo', 'ctrl_no'], ['Year', 'year'], ['Seq', 'seq'], ['LastName', 'last_name'],
   ['FirstName', 'first_name'], ['MiddleName', 'middle_name'], ['Suffix', 'suffix'], ['Birthdate', 'birthdate'],
-  ['Birthplace', 'birthplace'], ['Gender', 'gender'], ['School', 'school'], ['FatherName', 'father_name'], ['MotherName', 'mother_name'],
+  ['Birthplace', 'birthplace'], ['Gender', 'gender'], ['School', 'school'], ['Grade', 'grade'], ['Section', 'section'],
+  ['AdultBaptism', 'adult_baptism'], ['Convert', 'is_convert'], ['FatherName', 'father_name'], ['MotherName', 'mother_name'],
   ['DateBaptized', 'date_baptized'], ['ChurchBaptized', 'church_baptized'], ['BaptismMinister', 'baptism_minister'],
   ['DateCommunion', 'date_communion'], ['CommunionMinister', 'communion_minister'], ['CreatedBy', 'created_by'],
   ['CreatedAt', 'created_at'], ['UpdatedBy', 'updated_by'], ['UpdatedAt', 'updated_at'],
 ];
 const NULLABLE = new Set(['Id', 'Year', 'Gender', 'Birthdate', 'DateBaptized', 'DateCommunion', 'CreatedAt']);
 const DATE_KEYS = ['Birthdate', 'DateBaptized', 'DateCommunion'];
+// Check-box fields: held in the page as 'Yes' or '', saved to the database as true / false
+const FLAGS = ['AdultBaptism', 'Convert'];
+const isYes = v => v === true || /^(yes|y|true|1|x|✓|✔)$/i.test(String(v ?? '').trim());
 
 // One First Communicant
 export class CommunionRecord {
@@ -18,14 +22,18 @@ export class CommunionRecord {
   static FIELDS = [
     ['CtrlNo', 'Control No.'], ['Year', 'Year'], ['LastName', 'Last Name'], ['FirstName', 'First Name'],
     ['MiddleName', 'Middle Name'], ['Suffix', 'Suffix'], ['Birthdate', 'Birthdate'], ['Age', 'Age'],
-    ['Birthplace', 'Birthplace'], ['Gender', 'Gender'], ['School', 'School'], ['FatherName', "Father's Name"], ['MotherName', "Mother's Name"],
+    ['Birthplace', 'Birthplace'], ['Gender', 'Gender'], ['School', 'School'], ['Grade', 'Grade'], ['Section', 'Section'],
+    ['AdultBaptism', 'Adult Baptism'], ['Convert', 'Convert'], ['FatherName', "Father's Name"], ['MotherName', "Mother's Name"],
     ['DateBaptized', 'Date Baptized'], ['ChurchBaptized', 'Church Baptized'], ['BaptismMinister', 'Baptism Minister'],
     ['DateCommunion', 'Date Received Communion'], ['CommunionMinister', 'Communion Minister'],
     ['CreatedBy', 'Created By'], ['CreatedAt', 'Created At'], ['UpdatedBy', 'Updated By'], ['UpdatedAt', 'Updated At'],
   ];
 
   constructor(data = {}) {
-    for (const [key] of COLUMNS) this[key] = data[key] === undefined || data[key] === null ? '' : String(data[key]);
+    for (const [key] of COLUMNS) {
+      this[key] = FLAGS.includes(key) ? (isYes(data[key]) ? 'Yes' : '')
+        : data[key] === undefined || data[key] === null ? '' : String(data[key]);
+    }
   }
 
   static blank() {
@@ -43,6 +51,7 @@ export class CommunionRecord {
     const row = {};
     for (const [key, col] of COLUMNS) {
       if (key === 'Seq' || key === 'UpdatedBy' || key === 'UpdatedAt') continue;
+      if (FLAGS.includes(key)) { row[col] = this[key] === 'Yes'; continue; }
       const v = String(this[key] ?? '').trim();
       row[col] = v === '' && NULLABLE.has(key) ? null : v;
     }
@@ -56,6 +65,8 @@ export class CommunionRecord {
   get isNew() { return !this.Id; }
   get fullName() { return [this.FirstName, this.MiddleName, this.LastName, this.Suffix].filter(Boolean).join(' '); }
   get sortName() { return `${this.LastName}, ${[this.FirstName, this.MiddleName, this.Suffix].filter(Boolean).join(' ')}`; }
+  // "Adult baptism, Convert", or '' for an ordinary communicant
+  get typeLabel() { return [this.AdultBaptism && 'Adult baptism', this.Convert && 'Convert'].filter(Boolean).join(', '); }
   get parents() { return [this.FatherName, this.MotherName].filter(Boolean).join(' and '); }
   get hisHer() { return this.Gender === 'Male' ? 'his' : this.Gender === 'Female' ? 'her' : 'his/her'; }
   get heShe() { return this.Gender === 'Male' ? 'he' : this.Gender === 'Female' ? 'she' : 'he/she'; }
@@ -71,7 +82,7 @@ export class CommunionRecord {
     if (year && this.Year !== year) return false;
     if (school && this.schoolLabel !== school) return false;
     const q = (query || '').trim().toLowerCase();
-    return !q || `${this.CtrlNo} ${this.fullName} ${this.LastName} ${this.School}`.toLowerCase().includes(q);
+    return !q || `${this.CtrlNo} ${this.fullName} ${this.LastName} ${this.School} ${this.Grade} ${this.Section}`.toLowerCase().includes(q);
   }
 
   // Returns a problem to show, or '' when the record can be saved

@@ -45,6 +45,20 @@ export class Slips {
   // schools were kept in the Document Log.
   static schoolOf = () => '';
 
+  // Looks up who ENCODED a certificate's record (its Created By), set by App. This is not the person
+  // who prints: the printer is the Document Log entry's byName and goes under "Released By".
+  static encoderOf = () => '';
+
+  // Names of everyone who encoded the records in these entries, in order of first appearance
+  static #encoders(entries) {
+    const names = [];
+    for (const d of entries) {
+      const n = Slips.encoderOf(d.ctrl);
+      if (n && !names.includes(n)) names.push(n);
+    }
+    return names.join(', ') || '—';
+  }
+
   // batch: the batch DocEntry; entries: the certificate DocEntries in print order.
   // Grouped by school (A→Z, "no school" last) with a count per school, so the staff can see
   // how many from each school received communion and who they are.
@@ -74,7 +88,7 @@ export class Slips {
       ${Slips.#header('Certificate Release Waybill', batch.docNo)}
       <table style="width:100%;margin-top:10px;font-size:13px"><tr>
         <td><b>Certificates:</b> ${entries.length}</td><td><b>Schools:</b> ${order.length}</td>
-        <td><b>Encoded by:</b> ${esc(batch.byName)}</td><td><b>Date:</b> ${esc(Dates.stamp(batch.at))}</td></tr></table>
+        <td><b>Encoded by:</b> ${esc(Slips.#encoders(entries))}</td><td><b>Date:</b> ${esc(Dates.stamp(batch.at))}</td></tr></table>
       <table style="width:60%;border-collapse:collapse;margin-top:10px;font-size:12px">
         <tr><th style="${CELL}">School</th><th style="${CELL};text-align:center">Communicants</th></tr>
         ${summary}
@@ -92,7 +106,7 @@ export class Slips {
   static #slip(d) {
     const rows = [['Certificate', 'First Communion'], ['Control No.', d.ctrl], ['Name', d.name],
       ['School', d.school || Slips.schoolOf(d.ctrl)],   // staff paper only; never on the certificate
-      ['Printed as', d.type.replace(/^Certificate \((.*)\)$/, '$1')], ['Encoded by', d.byName], ['Date and time', Dates.stamp(d.at)],
+      ['Printed as', d.type.replace(/^Certificate \((.*)\)$/, '$1')], ['Encoded by', Slips.encoderOf(d.ctrl)], ['Printed by', d.byName], ['Date and time', Dates.stamp(d.at)],
       ['Batch', d.detail.replace(/^Batch /, '')]].filter(([, v]) => v);
     return `<div style="${STYLE};height:4.75in;overflow:hidden">
       ${Slips.#header('Certificate Release Slip', d.docNo)}
@@ -116,7 +130,7 @@ export class Slips {
   // For other logged documents (exports, backups, deletions)
   static documentSlip(d) {
     const rows = [['Document', d.type], ['Control No.', d.ctrl], ['Name', d.name], ['Details', d.detail],
-      ['Encoded by', d.byName], ['Date and time', Dates.stamp(d.at)]].filter(([, v]) => v);
+      ['Prepared by', d.byName], ['Date and time', Dates.stamp(d.at)]].filter(([, v]) => v);
     return `<div style="${STYLE}">
       ${Slips.#header('Document Release Slip', d.docNo)}
       <table style="width:100%;border-collapse:collapse;margin-top:14px">
